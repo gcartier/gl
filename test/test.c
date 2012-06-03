@@ -8,7 +8,7 @@
 #include <stdio.h>
 
 
-#define IMMEDIATE
+// #define IMMEDIATE
 
 
 //-------
@@ -81,7 +81,7 @@ static const char* pVS = "							\n\
 													\n\
 void main()											\n\
 {													\n\
-    gl_Position = gl_Vertex;						\n\
+	gl_Position = gl_Vertex;						\n\
 }";
 
 
@@ -90,7 +90,7 @@ static const char* pFS = "							\n\
 													\n\
 void main()											\n\
 {													\n\
-    gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);		\n\
+	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);		\n\
 }";
 
 
@@ -98,27 +98,27 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 {
 	printlog("Adding shader");
 	
-    GLuint ShaderObj = glCreateShader(ShaderType);
+	GLuint ShaderObj = glCreateShader(ShaderType);
 
-    if (ShaderObj == 0) {
-        printerror("Error creating shader");
-        exit(0);
-    }
+	if (ShaderObj == 0) {
+		printerror("Error creating shader");
+		exit(0);
+	}
 
-    const GLchar* p[1];
-    p[0] = pShaderText;
-    glShaderSource(ShaderObj, 1, p, NULL);
-    glCompileShader(ShaderObj);
-    GLint success;
-    glGetShaderiv(ShaderObj, GL_COMPILE_STATUS, &success);
-    if (!success) {
-        GLchar InfoLog[1024];
-        glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
-        printerror("Error compiling shader");
-        exit(EXIT_FAILURE);
-    }
+	const GLchar* p[1];
+	p[0] = pShaderText;
+	glShaderSource(ShaderObj, 1, p, NULL);
+	glCompileShader(ShaderObj);
+	GLint success;
+	glGetShaderiv(ShaderObj, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		GLchar InfoLog[1024];
+		glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
+		printerror("Error compiling shader");
+		exit(EXIT_FAILURE);
+	}
 
-    glAttachShader(ShaderProgram, ShaderObj);
+	glAttachShader(ShaderProgram, ShaderObj);
 }
 
 
@@ -470,20 +470,20 @@ void RenderScene()
 	glClear(GL_COLOR_BUFFER_BIT);
 
 #ifdef IMMEDIATE
-    glColor3f(0.0, 0.0, 1.0);
-    glBegin(GL_TRIANGLES);
-    glVertex3f(-0.5, -0.5, 0.0);
-    glVertex3f( 0.5, -0.5, 0.0);
-    glVertex3f( 0.0,  0.5, 0.0);
-    glEnd();
+	glColor3f(0.0, 0.0, 1.0);
+	glBegin(GL_TRIANGLES);
+	glVertex3f(-0.5, -0.5, 0.0);
+	glVertex3f( 0.5, -0.5, 0.0);
+	glVertex3f( 0.0,  0.5, 0.0);
+	glEnd();
 #else
-    glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	glEnableVertexAttribArray(0);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
 	
-    glDrawArrays(GL_TRIANGLES, 0, 3);
+	glDrawArrays(GL_TRIANGLES, 0, 3);
 	
-    glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(0);
 #endif
 }
 
@@ -558,31 +558,31 @@ int main(void)
 	
 	glfwSetWindowTitle("Hello world!");
 	
-    glewInit();
+	glewInit();
 	printlog("GLEW initialized");
-    if (glewIsSupported("GL_VERSION_3_0"))
-        printlog("Ready for OpenGL 3.0");
-    else {
-        printerror("OpenGL 3.0 not supported");
-        exit(EXIT_FAILURE);
-    }
+	if (glewIsSupported("GL_VERSION_3_0"))
+		printlog("Ready for OpenGL 3.0");
+	else {
+		printerror("OpenGL 3.0 not supported");
+		exit(EXIT_FAILURE);
+	}
 #endif
 
 #ifndef IMMEDIATE
 	//	GLuint vao;
 	//	glGenVertexArrays(1, &vao);
 	//	glBindVertexArray(vao);
-    
-    CreateVertexBuffer();
-    
+	
+	CreateVertexBuffer();
+	
 	GLuint p;
 	
 	// Create the program
 	p = glCreateProgram();
 	printlog("Program created");
 	
-    AddShader(p, pVS, GL_VERTEX_SHADER);
-    AddShader(p, pFS, GL_FRAGMENT_SHADER);
+	AddShader(p, pVS, GL_VERTEX_SHADER);
+	AddShader(p, pFS, GL_FRAGMENT_SHADER);
 	
 	// Link and set program to use
 	glLinkProgram(p);
