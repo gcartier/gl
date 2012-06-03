@@ -9,6 +9,15 @@
 
 
 //-------
+/// Todo
+//-------
+
+
+// - Should PIXELFORMATDESCRIPTOR cColorBits be 24 or 32?
+// - Fix switching between fullscreen and windowed mode
+
+
+//-------
 /// Log
 //-------
 
@@ -160,7 +169,7 @@ GLvoid ResizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 		height=1;										// Making Height Equal One
 	}
 
-	glViewport(0,0,width,height);						// Reset The Current Viewport
+	glViewport(0, 0, width, height);					// Reset The Current Viewport
 
 	glMatrixMode(GL_PROJECTION);						// Select The Projection Matrix
 	glLoadIdentity();									// Reset The Projection Matrix
@@ -185,25 +194,17 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 }
 
 
-int DrawGLScene(GLvoid)									// Here Where We Do All The Drawing
-{
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
-	glLoadIdentity();									// Reset The Current Modelview Matrix
-	return TRUE;										// Everything Went OK
-}
-
-
 GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 {
 	if (fullscreen)										// Are We In Fullscreen Mode?
 	{
-		ChangeDisplaySettings(NULL,0);					// If So Switch Back To The Desktop
+		ChangeDisplaySettings(NULL, 0);					// If So Switch Back To The Desktop
 		ShowCursor(TRUE);								// Show Mouse Pointer
 	}
 
 	if (hRC)											// Do We Have A Rendering Context?
 	{
-		if (!wglMakeCurrent(NULL,NULL))					// Are We Able To Release The DC And RC Contexts?
+		if (!wglMakeCurrent(NULL, NULL))				// Are We Able To Release The DC And RC Contexts?
 		{
 			printerror("Release of DC and RC failed");
 		}
@@ -215,7 +216,7 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 		hRC=NULL;										// Set RC To NULL
 	}
 
-	if (hDC && !ReleaseDC(hWnd,hDC))					// Are We Able To Release The DC
+	if (hDC && !ReleaseDC(hWnd, hDC))					// Are We Able To Release The DC
 	{
 		printerror("Release device context failed");
 		hDC=NULL;										// Set DC To NULL
@@ -270,7 +271,7 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 	if (fullscreen)												// Attempt Fullscreen Mode?
 	{
 		DEVMODE dmScreenSettings;								// Device Mode
-		memset(&dmScreenSettings,0,sizeof(dmScreenSettings));	// Makes Sure Memory Is Cleared
+		memset(&dmScreenSettings, 0, sizeof(dmScreenSettings));	// Makes Sure Memory Is Cleared
 		dmScreenSettings.dmSize=sizeof(dmScreenSettings);		// Size Of The Devmode Structure
 		dmScreenSettings.dmPelsWidth	= width;				// Selected Screen Width
 		dmScreenSettings.dmPelsHeight	= height;				// Selected Screen Height
@@ -278,7 +279,7 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 		dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
 
 		// Try To Set Selected Mode And Get Results.  NOTE: CDS_FULLSCREEN Gets Rid Of Start Bar.
-		if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
+		if (ChangeDisplaySettings(&dmScreenSettings, CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
 		{
 			printerror("The requested fullscreen mode is not supported by your video card. Using windowed mode instead");
 			fullscreen=FALSE;		// Windowed Mode Selected.  Fullscreen = FALSE
@@ -335,7 +336,7 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 		0,											// Shift Bit Ignored
 		0,											// No Accumulation Buffer
 		0, 0, 0, 0,									// Accumulation Bits Ignored
-		16,											// 16Bit Z-Buffer (Depth Buffer)  
+		32,											// 16Bit Z-Buffer (Depth Buffer)  
 		0,											// No Stencil Buffer
 		0,											// No Auxiliary Buffer
 		PFD_MAIN_PLANE,								// Main Drawing Layer
@@ -357,7 +358,7 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 		exit(EXIT_FAILURE);
 	}
 
-	if (!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
+	if (!SetPixelFormat(hDC, PixelFormat, &pfd))	// Are We Able To Set The Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not set the pixelformat");
@@ -371,14 +372,14 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 		exit(EXIT_FAILURE);
 	}
 
-	if (!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
+	if (!wglMakeCurrent(hDC, hRC))					// Try To Activate The Rendering Context
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not activate the OpenGL rendering context");
 		exit(EXIT_FAILURE);
 	}
 
-	ShowWindow(hWnd,SW_SHOW);						// Show The Window
+	ShowWindow(hWnd, SW_SHOW);						// Show The Window
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
 	ResizeGLScene(width, height);					// Set Up Our Perspective GL Screen
@@ -444,15 +445,35 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 
 		case WM_SIZE:								// Resize The OpenGL Window
 		{
-			ResizeGLScene(LOWORD(lParam),HIWORD(lParam));  // LoWord=Width, HiWord=Height
+			ResizeGLScene(LOWORD(lParam), HIWORD(lParam));  // LoWord=Width, HiWord=Height
 			return 0;								// Jump Back
 		}
 	}
 
 	// Pass All Unhandled Messages To DefWindowProc
-	return DefWindowProc(hWnd,uMsg,wParam,lParam);
+	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 #endif
+
+
+//----------
+/// Render
+//----------
+
+
+void RenderScene()
+{
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+	
+    glDrawArrays(GL_TRIANGLES, 0, 3);
+	
+    glDisableVertexAttribArray(0);
+}
 
 
 //--------
@@ -480,64 +501,38 @@ int main(void)
 	CreateGLWindow(L"OpenGL", 640, 480, fullscreen);
 	printlog("Window created");
 	
-	HDC		pDC = GetDC(hWnd);
-	HGLRC	m_hrc;
-	
-	PIXELFORMATDESCRIPTOR pfd;
-	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
-	pfd.nSize  = sizeof(PIXELFORMATDESCRIPTOR);
-	pfd.nVersion   = 1;
-	pfd.dwFlags    = PFD_DOUBLEBUFFER | PFD_SUPPORT_OPENGL | PFD_DRAW_TO_WINDOW;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 32;
-	pfd.cDepthBits = 32;
-	pfd.iLayerType = PFD_MAIN_PLANE;
- 
-	int nPixelFormat = ChoosePixelFormat(pDC, &pfd);
- 
-	if (nPixelFormat == 0)
-		exit(EXIT_FAILURE);
- 
-	BOOL bResult = SetPixelFormat(pDC, nPixelFormat, &pfd);
- 
-	if (!bResult)
-		exit(EXIT_FAILURE);
- 
-	HGLRC tempContext = wglCreateContext(pDC);
-	wglMakeCurrent(pDC, tempContext);
-	
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
 		printerror("Unable to initialize GLEW");
 		exit(EXIT_FAILURE);
 	}
+	printlog("GLEW initialized");
 	
-	int attribs[] =
-	{
-		WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-		WGL_CONTEXT_MINOR_VERSION_ARB, 1,
-		WGL_CONTEXT_FLAGS_ARB, 0,
-		0
-	};
- 
 	if (wglewIsSupported("WGL_ARB_create_context") == 1)
 	{
-		m_hrc = wglCreateContextAttribsARB(pDC, 0, attribs);
-		wglMakeCurrent(NULL,NULL);
-		wglDeleteContext(tempContext);
-		wglMakeCurrent(pDC, m_hrc);
-	}
-	else
-	{	// It is not possible to make a GL 3.x context. Use the old style context (GL 2.1 and before)
-		m_hrc = tempContext;
+		int attribs[] =
+		{
+			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+			WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+			WGL_CONTEXT_FLAGS_ARB, 0,
+			0
+		};
+		
+		HGLRC	newRC;
+	
+		newRC = wglCreateContextAttribsARB(hDC, 0, attribs);
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(hRC);
+		wglMakeCurrent(hDC, newRC);
+		printlog("OpenGL context recreated");
+		hRC = newRC;
 	}
 #else
 	// Initialize GLFW
 	if (!glfwInit())
-	{
 		exit(EXIT_FAILURE);
-	}
+	printlog("GLFW initialized");
 	
 	// Open an OpenGL window
 	glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 4);
@@ -552,6 +547,7 @@ int main(void)
 	glfwSetWindowTitle("Hello world!");
 	
     glewInit();
+	printlog("GLEW initialized");
     if (glewIsSupported("GL_VERSION_3_0"))
         printlog("Ready for OpenGL 3.0");
     else {
@@ -581,7 +577,7 @@ int main(void)
 #ifdef WGLCREATE
 	while (!done)									// Loop That Runs While done=FALSE
 	{
-		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))	// Is There A Message Waiting?
+		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))	// Is There A Message Waiting?
 		{
 			if (msg.message==WM_QUIT)				// Have We Received A Quit Message?
 			{
@@ -595,7 +591,7 @@ int main(void)
 		}
 		else										// If There Are No Messages
 		{
-			// Draw The Scene.  Watch For ESC Key And Quit Messages From DrawGLScene()
+			// Draw The Scene. Watch For ESC Key And Quit Messages
 			if (active)								// Program Active?
 			{
 				if (keys[VK_ESCAPE])				// Was ESC Pressed?
@@ -604,7 +600,7 @@ int main(void)
 				}
 				else								// Not Time To Quit, Update Screen
 				{
-					DrawGLScene();					// Draw The Scene
+					RenderScene();					// Render The Scene
 					SwapBuffers(hDC);				// Swap Buffers (Double Buffering)
 				}
 			}
@@ -628,18 +624,9 @@ int main(void)
 	// Main loop
 	while (running)
 	{
-		// OpenGL rendering goes here...
-		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		// Render
+		RenderScene();
 		
-	    glEnableVertexAttribArray(0);
-	    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-		
-	    glDrawArrays(GL_TRIANGLES, 0, 3);
-		
-	    glDisableVertexAttribArray(0);
-	
 		// Swap front and back rendering buffers
 		glfwSwapBuffers();
 		
