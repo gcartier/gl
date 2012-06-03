@@ -1,6 +1,6 @@
-//#define GLEW_
-//#define OPENGL3_
-#define IMMEDIATE_
+#define GLEW_
+#define OPENGL3_
+//#define IMMEDIATE_
 
 
 #include <windows.h>
@@ -78,6 +78,20 @@ static void printerror(char* format, ...)
 }
 
 
+static void printexit(char* format, ...)
+{
+	va_list arguments;
+
+	va_start(arguments, format);
+	print("***** ");
+	vprint(format, arguments);
+	print(" *****\n");
+	va_end(arguments);
+	
+	exit(EXIT_FAILURE);
+}
+
+
 //-----------
 /// Shaders
 //-----------
@@ -108,10 +122,8 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 	
 	GLuint ShaderObj = glCreateShader(ShaderType);
 
-	if (ShaderObj == 0) {
-		printerror("Error creating shader");
-		exit(0);
-	}
+	if (ShaderObj == 0)
+		printexit("Error creating shader");
 
 	const GLchar* p[1];
 	p[0] = pShaderText;
@@ -122,8 +134,7 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 	if (!success) {
 		GLchar InfoLog[1024];
 		glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
-		printerror("Error compiling shader");
-		exit(EXIT_FAILURE);
+		printexit("Error compiling shader");
 	}
 
 	glAttachShader(ShaderProgram, ShaderObj);
@@ -162,14 +173,14 @@ static void CreateVertexBuffer()
 
 
 #ifdef WGL_
+HWND		hWnd=NULL;		// Holds Our Window Handle
 HDC			hDC=NULL;		// Private GDI Device Context
 HGLRC		hRC=NULL;		// Permanent Rendering Context
-HWND		hWnd=NULL;		// Holds Our Window Handle
 HINSTANCE	hInstance;		// Holds The Instance Of The Application
 
 BOOL	keys[256];			// Array Used For The Keyboard Routine
 BOOL	active=TRUE;		// Window Active Flag Set To TRUE By Default
-BOOL	fullscreen=FALSE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
+BOOL	fullscreen=TRUE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
@@ -196,7 +207,7 @@ GLvoid ResizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 }
 
 
-int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
+int SetupGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);				// Black Background
@@ -219,34 +230,51 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 	if (hRC)											// Do We Have A Rendering Context?
 	{
 		if (!wglMakeCurrent(NULL, NULL))				// Are We Able To Release The DC And RC Contexts?
-		{
-			printerror("Release of DC and RC failed");
-		}
+			printexit("Release of DC and RC failed");
 
 		if (!wglDeleteContext(hRC))						// Are We Able To Delete The RC?
-		{
-			printerror("Release rendering context failed");
-		}
+			printexit("Release rendering context failed");
+		
 		hRC=NULL;										// Set RC To NULL
 	}
 
-	if (hDC && !ReleaseDC(hWnd, hDC))					// Are We Able To Release The DC
+	if (hDC)
 	{
-		printerror("Release device context failed");
+		if (!ReleaseDC(hWnd, hDC))						// Are We Able To Release The DC
+			printexit("Release device context failed");
+		
 		hDC=NULL;										// Set DC To NULL
 	}
 
-	if (hWnd && !DestroyWindow(hWnd))					// Are We Able To Destroy The Window?
+	if (hWnd)
 	{
-		printerror("Could not release window");
+		if (!DestroyWindow(hWnd))						// Are We Able To Destroy The Window?
+			printexit("Could not release window");
+		
 		hWnd=NULL;										// Set hWnd To NULL
 	}
 
 	if (!UnregisterClass(L"OpenGL", hInstance))			// Are We Able To Unregister Class
 	{
-		printerror("Could not unregister class");
+		printexit("Could not unregister class");
+		
 		hInstance=NULL;									// Set hInstance To NULL
 	}
+}
+
+
+static void printkill(char* format, ...)
+{
+	va_list arguments;
+
+	va_start(arguments, format);
+	print("***** ");
+	vprint(format, arguments);
+	print(" *****\n");
+	va_end(arguments);
+	
+	KillGLWindow();
+	exit(EXIT_FAILURE);
 }
 
 
@@ -277,10 +305,7 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 	wc.lpszClassName	= L"OpenGL";							// Set The Class Name
 
 	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
-	{
-		printerror("Failed to register the window class");
-		exit(EXIT_FAILURE);
-	}
+		printexit("Failed to register the window class");
 	
 	if (fullscreen)												// Attempt Fullscreen Mode?
 	{
@@ -330,11 +355,10 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 								NULL,								// No Menu
 								hInstance,							// Instance
 								NULL)))								// Dont Pass Anything To WM_CREATE
-	{
-		KillGLWindow();								// Reset The Display
-		printerror("Window creation error");
-		exit(EXIT_FAILURE);
-	}
+		printkill("Window creation error");
+	
+	if (!(hDC=GetDC(hWnd)))							// Did We Get A Device Context?
+		printkill("Could not create an OpenGL device context");
 	
 	static	PIXELFORMATDESCRIPTOR pfd=				// pfd Tells Windows How We Want Things To Be
 	{
@@ -357,53 +381,26 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 		0,											// Reserved
 		0, 0, 0										// Layer Masks Ignored
 	};
-	
-	if (!(hDC=GetDC(hWnd)))							// Did We Get A Device Context?
-	{
-		KillGLWindow();								// Reset The Display
-		printerror("Could not create an OpenGL device context");
-		exit(EXIT_FAILURE);
-	}
 
 	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
-	{
-		KillGLWindow();								// Reset The Display
-		printerror("Could not find a suitable pixelformat");
-		exit(EXIT_FAILURE);
-	}
+		printkill("Could not find a suitable pixelformat");
 
 	if (!SetPixelFormat(hDC, PixelFormat, &pfd))	// Are We Able To Set The Pixel Format?
-	{
-		KillGLWindow();								// Reset The Display
-		printerror("Could not set the pixelformat");
-		exit(EXIT_FAILURE);
-	}
+		printkill("Could not set the pixelformat");
 
 	if (!(hRC=wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
-	{
-		KillGLWindow();								// Reset The Display
-		printerror("Could not create an OpenGL rendering context");
-		exit(EXIT_FAILURE);
-	}
+		printkill("Could not create an OpenGL rendering context");
 
 	if (!wglMakeCurrent(hDC, hRC))					// Try To Activate The Rendering Context
-	{
-		KillGLWindow();								// Reset The Display
-		printerror("Could not activate the OpenGL rendering context");
-		exit(EXIT_FAILURE);
-	}
+		printkill("Could not activate the OpenGL rendering context");
 
 	ShowWindow(hWnd, SW_SHOW);						// Show The Window
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
 	ResizeGLScene(width, height);					// Set Up Our Perspective GL Screen
 
-	if (!InitGL())									// Initialize Our Newly Created GL Window
-	{
-		KillGLWindow();								// Reset The Display
-		printerror("Initialization failed");
-		exit(EXIT_FAILURE);
-	}
+	if (!SetupGL())									// Setup Our Newly Created GL Window
+		printkill("Initialization failed");
 }
 
 
@@ -470,6 +467,39 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 #endif
 
 
+//-----------
+/// Context
+//-----------
+
+
+#ifdef WGL_
+static void AdjustGLContext()
+{
+	#ifdef OPENGL3_
+	if (wglewIsSupported("WGL_ARB_create_context") == 1)
+	{
+		int attribs[] =
+		{
+			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
+			WGL_CONTEXT_MINOR_VERSION_ARB, 0,
+			WGL_CONTEXT_FLAGS_ARB, 0,
+			0
+		};
+		
+		HGLRC	newRC;
+	
+		newRC = wglCreateContextAttribsARB(hDC, 0, attribs);
+		wglMakeCurrent(NULL, NULL);
+		wglDeleteContext(hRC);
+		wglMakeCurrent(hDC, newRC);
+		hRC = newRC;
+		printlog("OpenGL context recreated");
+	}
+	#endif
+}
+#endif
+
+
 //----------
 /// Render
 //----------
@@ -477,17 +507,30 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 
 void RenderScene()
 {
+#ifdef IMMEDIATE_
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
+	glLoadIdentity();									// Reset The Current Modelview Matrix
+	glTranslatef(-1.5f,0.0f,-6.0f);						// Move Left 1.5 Units And Into The Screen 6.0
+	glBegin(GL_TRIANGLES);								// Drawing Using Triangles
+		glColor3f(1.0f,0.0f,0.0f);						// Set The Color To Red
+		glVertex3f( 0.0f, 1.0f, 0.0f);					// Top
+		glColor3f(0.0f,1.0f,0.0f);						// Set The Color To Green
+		glVertex3f(-1.0f,-1.0f, 0.0f);					// Bottom Left
+		glColor3f(0.0f,0.0f,1.0f);						// Set The Color To Blue
+		glVertex3f( 1.0f,-1.0f, 0.0f);					// Bottom Right
+	glEnd();											// Finished Drawing The Triangle
+	glTranslatef(3.0f,0.0f,0.0f);						// Move Right 3 Units
+	glColor3f(0.5f,0.5f,1.0f);							// Set The Color To Blue One Time Only
+	glBegin(GL_QUADS);									// Draw A Quad
+		glVertex3f(-1.0f, 1.0f, 0.0f);					// Top Left
+		glVertex3f( 1.0f, 1.0f, 0.0f);					// Top Right
+		glVertex3f( 1.0f,-1.0f, 0.0f);					// Bottom Right
+		glVertex3f(-1.0f,-1.0f, 0.0f);					// Bottom Left
+	glEnd();											// Done Drawing The Quad
+#else
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-#ifdef IMMEDIATE_
-	glColor3f(0.0, 0.0, 1.0);
-	glBegin(GL_TRIANGLES);
-	glVertex3f(-0.5, -0.5, 0.0);
-	glVertex3f( 0.5, -0.5, 0.0);
-	glVertex3f( 0.0,  0.5, 0.0);
-	glEnd();
-#else
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
@@ -496,6 +539,45 @@ void RenderScene()
 	
 	glDisableVertexAttribArray(0);
 #endif
+}
+
+
+//-----------
+/// Program
+//-----------
+
+
+GLuint idProgram;
+
+
+static void CreateProgram()
+{
+	//	GLuint vao;
+	//	glGenVertexArrays(1, &vao);
+	//	glBindVertexArray(vao);
+	
+	CreateVertexBuffer();
+	
+	GLuint p;
+	
+	// Create the program
+	p = glCreateProgram();
+	printlog("Program created");
+	
+	AddShader(p, pVS, GL_VERTEX_SHADER);
+	AddShader(p, pFS, GL_FRAGMENT_SHADER);
+	
+	// Link and set program to use
+	glLinkProgram(p);
+	glUseProgram(p);
+	
+	idProgram = p;
+}
+
+
+static void ReleaseProgram()
+{
+	glDeleteProgram(idProgram);
 }
 
 
@@ -527,33 +609,10 @@ int main(void)
 	#ifdef GLEW_
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
-	{
-		printerror("Unable to initialize GLEW");
-		exit(EXIT_FAILURE);
-	}
+		printexit("Unable to initialize GLEW");
 	printlog("GLEW initialized");
 	
-	#ifdef OPENGL3_
-	if (wglewIsSupported("WGL_ARB_create_context") == 1)
-	{
-		int attribs[] =
-		{
-			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-			WGL_CONTEXT_MINOR_VERSION_ARB, 0,
-			WGL_CONTEXT_FLAGS_ARB, 0,
-			0
-		};
-		
-		HGLRC	newRC;
-	
-		newRC = wglCreateContextAttribsARB(hDC, 0, attribs);
-		wglMakeCurrent(NULL, NULL);
-		wglDeleteContext(hRC);
-		wglMakeCurrent(hDC, newRC);
-		hRC = newRC;
-		printlog("OpenGL context recreated");
-	}
-	#endif
+	AdjustGLContext();
 	#endif
 #else
 	// Initialize GLFW
@@ -562,9 +621,11 @@ int main(void)
 	printlog("GLFW initialized");
 	
 	// Open an OpenGL window
+	#ifdef OPENGL3_
 	glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 4);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 0);
+	#endif
 	if (!glfwOpenWindow(600, 400, 0, 0, 0, 0, 0, 0, GLFW_WINDOW)) // GLFW_FULLSCREEN
 	{
 		glfwTerminate();
@@ -578,33 +639,14 @@ int main(void)
 	printlog("GLEW initialized");
 	if (glewIsSupported("GL_VERSION_3_0"))
 		printlog("Ready for OpenGL 3.0");
-	else {
-		printerror("OpenGL 3.0 not supported");
-		exit(EXIT_FAILURE);
-	}
+	else
+		printexit("OpenGL 3.0 not supported");
 	#endif
 #endif
 
 #ifdef GLEW_
 #ifndef IMMEDIATE_
-	//	GLuint vao;
-	//	glGenVertexArrays(1, &vao);
-	//	glBindVertexArray(vao);
-	
-	CreateVertexBuffer();
-	
-	GLuint p;
-	
-	// Create the program
-	p = glCreateProgram();
-	printlog("Program created");
-	
-	AddShader(p, pVS, GL_VERTEX_SHADER);
-	AddShader(p, pFS, GL_FRAGMENT_SHADER);
-	
-	// Link and set program to use
-	glLinkProgram(p);
-	glUseProgram(p);
+	CreateProgram();
 #endif
 #endif
 
@@ -639,6 +681,7 @@ int main(void)
 				}
 			}
 
+			// Toggle Fullscreen / Windowed Mode
 			if (keys[VK_F1])						// Is F1 Being Pressed?
 			{
 				keys[VK_F1]=FALSE;					// If So Make Key FALSE
@@ -647,6 +690,13 @@ int main(void)
 				// Recreate Our OpenGL Window
 				CreateGLWindow(L"OpenGL", 640, 480, fullscreen);
 				printlog("Window recreated");
+				#ifdef GLEW_
+				AdjustGLContext();
+				#ifndef IMMEDIATE_
+				ReleaseProgram();
+				CreateProgram();
+				#endif
+				#endif
 			}
 		}
 	}
