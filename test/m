@@ -1,0 +1,1 @@
+gcc -DUNICODE -D_WIN32_WINNT=0x0502 -Id:/gl/opengl/glfw/include/ -Id:/gl/opengl/glew/include/ -Id:/gl/opengl/glfw/include -Ld:/gl/opengl/glfw/lib/ -Ld:/gl/opengl/glew/lib -Ld:/gl/opengl/glfw/lib-mingw fw.c -lglfw -lopengl32 -lglu32 -lglew32
