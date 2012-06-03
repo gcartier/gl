@@ -8,6 +8,9 @@
 #include <stdio.h>
 
 
+#define IMMEDIATE
+
+
 //-------
 /// Todo
 //-------
@@ -185,7 +188,7 @@ GLvoid ResizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
-	glClearColor(0.0f, 0.0f, 0.0f, 0.5f);				// Black Background
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);				// Black Background
 	glClearDepth(1.0f);									// Depth Buffer Setup
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
@@ -465,7 +468,15 @@ void RenderScene()
 {
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
-	
+
+#ifdef IMMEDIATE
+    glColor3f(0.0, 0.0, 1.0);
+    glBegin(GL_TRIANGLES);
+    glVertex3f(-0.5, -0.5, 0.0);
+    glVertex3f( 0.5, -0.5, 0.0);
+    glVertex3f( 0.0,  0.5, 0.0);
+    glEnd();
+#else
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
@@ -473,6 +484,7 @@ void RenderScene()
     glDrawArrays(GL_TRIANGLES, 0, 3);
 	
     glDisableVertexAttribArray(0);
+#endif
 }
 
 
@@ -555,6 +567,8 @@ int main(void)
         exit(EXIT_FAILURE);
     }
 #endif
+
+#ifndef IMMEDIATE
 	//	GLuint vao;
 	//	glGenVertexArrays(1, &vao);
 	//	glBindVertexArray(vao);
@@ -573,6 +587,7 @@ int main(void)
 	// Link and set program to use
 	glLinkProgram(p);
 	glUseProgram(p);
+#endif
 
 #ifdef WGLCREATE
 	while (!done)									// Loop That Runs While done=FALSE
