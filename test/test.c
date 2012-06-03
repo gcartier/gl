@@ -151,7 +151,7 @@ BOOL	fullscreen=FALSE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
 
-GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
+GLvoid ResizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
 {
 	printlog("Resize %d, %d", width, height);
 	
@@ -357,7 +357,7 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 		exit(EXIT_FAILURE);
 	}
 
-	if(!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
+	if (!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not set the pixelformat");
@@ -371,7 +371,7 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 		exit(EXIT_FAILURE);
 	}
 
-	if(!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
+	if (!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not activate the OpenGL rendering context");
@@ -381,7 +381,7 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	ShowWindow(hWnd,SW_SHOW);						// Show The Window
 	SetForegroundWindow(hWnd);						// Slightly Higher Priority
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
-	ReSizeGLScene(width, height);					// Set Up Our Perspective GL Screen
+	ResizeGLScene(width, height);					// Set Up Our Perspective GL Screen
 
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
@@ -444,7 +444,7 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 
 		case WM_SIZE:								// Resize The OpenGL Window
 		{
-			ReSizeGLScene(LOWORD(lParam),HIWORD(lParam));  // LoWord=Width, HiWord=Height
+			ResizeGLScene(LOWORD(lParam),HIWORD(lParam));  // LoWord=Width, HiWord=Height
 			return 0;								// Jump Back
 		}
 	}
@@ -498,7 +498,7 @@ int main(void)
 	if (nPixelFormat == 0)
 		exit(EXIT_FAILURE);
  
-	BOOL bResult = SetPixelFormat (pDC, nPixelFormat, &pfd);
+	BOOL bResult = SetPixelFormat(pDC, nPixelFormat, &pfd);
  
 	if (!bResult)
 		exit(EXIT_FAILURE);
@@ -579,7 +579,7 @@ int main(void)
 	glUseProgram(p);
 
 #ifdef WGLCREATE
-	while(!done)									// Loop That Runs While done=FALSE
+	while (!done)									// Loop That Runs While done=FALSE
 	{
 		if (PeekMessage(&msg,NULL,0,0,PM_REMOVE))	// Is There A Message Waiting?
 		{
