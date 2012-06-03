@@ -8,13 +8,60 @@
 #include <stdio.h>
 
 
-FILE *logfile;
+//-------
+/// Log
+//-------
 
-static void printlog(char* line)
+
+FILE *logfile = NULL;
+
+
+static void print(char* string)
 {
-	fprintf(logfile, line);
+	if (!logfile)
+		logfile = fopen("log.txt", "w");
+	
+	fprintf(logfile, string);
 	fflush(logfile);
 }
+
+
+static void vprint(char* format, va_list arguments)
+{
+	if (!logfile)
+		logfile = fopen("log.txt", "w");
+	
+	vfprintf(logfile, format, arguments);
+	fflush(logfile);
+}
+
+
+static void printlog(char* format, ...)
+{
+	va_list arguments;
+
+	va_start(arguments, format);
+	vprint(format, arguments);
+	print("\n");
+	va_end(arguments);
+}
+
+
+static void printerror(char* format, ...)
+{
+	va_list arguments;
+
+	va_start(arguments, format);
+	print("***** ");
+	vprint(format, arguments);
+	print(" *****\n");
+	va_end(arguments);
+}
+
+
+//-----------
+/// Shaders
+//-----------
 
 
 static const char* pVS = "							\n\
@@ -37,10 +84,12 @@ void main()											\n\
 
 static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
 {
+	printlog("Adding shader");
+	
     GLuint ShaderObj = glCreateShader(ShaderType);
 
     if (ShaderObj == 0) {
-        printlog("Error creating shader type");
+        printerror("Error creating shader");
         exit(0);
     }
 
@@ -53,14 +102,21 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
     if (!success) {
         GLchar InfoLog[1024];
         glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
-        printlog("Error compiling shader");
+        printerror("Error compiling shader");
         exit( EXIT_FAILURE );
     }
 
     glAttachShader(ShaderProgram, ShaderObj);
 }
 
+
+//-----------
+/// Objects
+//-----------
+
+
 GLuint VBO;
+
 
 #ifdef TUT04
 static void CreateVertexBuffer()
@@ -91,6 +147,11 @@ static void CreateVertexBuffer()
 #endif
 
 
+//----------
+/// Window
+//----------
+
+
 #ifdef WGLCREATE
 HDC			hDC=NULL;		// Private GDI Device Context
 HGLRC		hRC=NULL;		// Permanent Rendering Context
@@ -103,8 +164,11 @@ BOOL	fullscreen=TRUE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
+
 GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize The GL Window
 {
+	printlog("Resize %d, %d", width, height);
+	
 	if (height==0)										// Prevent A Divide By Zero By
 	{
 		height=1;										// Making Height Equal One
@@ -116,11 +180,12 @@ GLvoid ReSizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 	glLoadIdentity();									// Reset The Projection Matrix
 
 	// Calculate The Aspect Ratio Of The Window
-	gluPerspective(45.0f,(GLfloat)width/(GLfloat)height,0.1f,100.0f);
+	gluPerspective(45.0f, (GLfloat)width/(GLfloat)height, 0.1f, 100.0f);
 
 	glMatrixMode(GL_MODELVIEW);							// Select The Modelview Matrix
 	glLoadIdentity();									// Reset The Modelview Matrix
 }
+
 
 int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
@@ -133,12 +198,14 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 	return TRUE;										// Initialization Went OK
 }
 
+
 int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 	glLoadIdentity();									// Reset The Current Modelview Matrix
 	return TRUE;										// Everything Went OK
 }
+
 
 GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 {
@@ -152,34 +219,35 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 	{
 		if (!wglMakeCurrent(NULL,NULL))					// Are We Able To Release The DC And RC Contexts?
 		{
-			printlog("Release Of DC And RC Failed");
+			printerror("Release of DC and RC failed");
 		}
 
 		if (!wglDeleteContext(hRC))						// Are We Able To Delete The RC?
 		{
-			printlog("Release Rendering Context Failed");
+			printerror("Release rendering context failed");
 		}
 		hRC=NULL;										// Set RC To NULL
 	}
 
 	if (hDC && !ReleaseDC(hWnd,hDC))					// Are We Able To Release The DC
 	{
-		printlog("Release Device Context Failed");
+		printerror("Release device context failed");
 		hDC=NULL;										// Set DC To NULL
 	}
 
 	if (hWnd && !DestroyWindow(hWnd))					// Are We Able To Destroy The Window?
 	{
-		printlog("Could Not Release hWnd");
+		printerror("Could not release window");
 		hWnd=NULL;										// Set hWnd To NULL
 	}
 
 	if (!UnregisterClass((LPCWSTR) "OpenGL", hInstance))			// Are We Able To Unregister Class
 	{
-		printlog("Could Not Unregister Class");
+		printerror("Could not unregister class");
 		hInstance=NULL;									// Set hInstance To NULL
 	}
 }
+
 
 BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 {
@@ -209,7 +277,7 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 
 	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
 	{
-		printlog("Failed To Register The Window Class");
+		printerror("Failed to register the window class");
 		exit( EXIT_FAILURE );
 	}
 	
@@ -226,7 +294,7 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 		// Try To Set Selected Mode And Get Results.  NOTE: CDS_FULLSCREEN Gets Rid Of Start Bar.
 		if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
 		{
-			printlog("The Requested Fullscreen Mode Is Not Supported By Your Video Card. Using Windowed Mode Instead");
+			printerror("The requested fullscreen mode is not supported by your video card. Using windowed mode instead");
 			fullscreen=FALSE;		// Windowed Mode Selected.  Fullscreen = FALSE
 		}
 	}
@@ -261,7 +329,7 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 								NULL)))								// Dont Pass Anything To WM_CREATE
 	{
 		KillGLWindow();								// Reset The Display
-		printlog("Window Creation Error");
+		printerror("Window creation error");
 		exit( EXIT_FAILURE );
 	}
 	
@@ -290,35 +358,35 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	if (!(hDC=GetDC(hWnd)))							// Did We Get A Device Context?
 	{
 		KillGLWindow();								// Reset The Display
-		printlog("Can't Create A GL Device Context");
+		printerror("Could not create an OpenGL device context");
 		exit( EXIT_FAILURE );
 	}
 
 	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
-		printlog("Can't Find A Suitable PixelFormat");
+		printerror("Could not find a suitable pixelformat");
 		exit( EXIT_FAILURE );
 	}
 
 	if(!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
-		printlog("Can't Set The PixelFormat");
+		printerror("Could not set the pixelformat");
 		exit( EXIT_FAILURE );
 	}
 
 	if (!(hRC=wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
 	{
 		KillGLWindow();								// Reset The Display
-		printlog("Can't Create A GL Rendering Context");
+		printerror("Could not create an OpenGL rendering context");
 		exit( EXIT_FAILURE );
 	}
 
 	if(!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
 	{
 		KillGLWindow();								// Reset The Display
-		printlog("Can't Activate The GL Rendering Context");
+		printerror("Could not activate the OpenGL rendering context");
 		exit( EXIT_FAILURE );
 	}
 
@@ -330,12 +398,13 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
 		KillGLWindow();								// Reset The Display
-		printlog("Initialization Failed");
+		printerror("Initialization failed");
 		exit( EXIT_FAILURE );
 	}
 
 	return TRUE;
 }
+
 
 LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 							UINT	uMsg,			// Message For This Window
@@ -400,6 +469,11 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 #endif
 
 
+//--------
+/// Main
+//--------
+
+
 #ifdef WGLCREATE
 int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 					HINSTANCE	hPrevInstance,		// Previous Instance
@@ -452,7 +526,7 @@ int main( void )
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
-		printlog("Unable to initialize GLEW");
+		printerror("Unable to initialize GLEW");
 		exit( EXIT_FAILURE );
 	}
 	
@@ -496,9 +570,9 @@ int main( void )
 	
     glewInit();
     if (glewIsSupported("GL_VERSION_3_0"))
-        printlog("Ready for OpenGL 3.0\n");
+        printlog("Ready for OpenGL 3.0");
     else {
-        printlog("OpenGL 3.0 not supported\n");
+        printerror("OpenGL 3.0 not supported");
         exit( EXIT_FAILURE );
     }
 #endif
@@ -512,6 +586,7 @@ int main( void )
 	
 	// Create the program
 	p = glCreateProgram();
+	printlog("Program created");
 	
     AddShader(p, pVS, GL_VERTEX_SHADER);
     AddShader(p, pFS, GL_FRAGMENT_SHADER);
