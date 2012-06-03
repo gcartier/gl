@@ -1,5 +1,5 @@
-#define GLEW_
-#define OPENGL3_
+//#define GLEW_
+//#define OPENGL3_
 #define IMMEDIATE_
 
 
@@ -7,6 +7,9 @@
 #ifdef GLEW_
 	#include <GL/glew.h>
 	#include <GL/wglew.h>
+#else
+	#include <GL/gl.h>
+	#include <GL/glu.h>
 #endif
 #ifndef WGL_
 	#include <GL/glfw.h>
@@ -80,6 +83,7 @@ static void printerror(char* format, ...)
 //-----------
 
 
+#ifdef GLEW_
 static const char* pVS = "							\n\
 #version 130										\n\
 													\n\
@@ -124,6 +128,7 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 
 	glAttachShader(ShaderProgram, ShaderObj);
 }
+#endif
 
 
 //-----------
@@ -131,6 +136,7 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 //-----------
 
 
+#ifdef GLEW_
 GLuint VBO;
 
 
@@ -147,6 +153,7 @@ static void CreateVertexBuffer()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
 }
+#endif
 
 
 //----------
@@ -517,6 +524,7 @@ int main(void)
 	CreateGLWindow(L"OpenGL", 640, 480, fullscreen);
 	printlog("Window created");
 	
+	#ifdef GLEW_
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
@@ -546,6 +554,7 @@ int main(void)
 		printlog("OpenGL context recreated");
 	}
 	#endif
+	#endif
 #else
 	// Initialize GLFW
 	if (!glfwInit())
@@ -564,6 +573,7 @@ int main(void)
 	
 	glfwSetWindowTitle("Hello world from GLFW!");
 	
+	#ifdef GLEW_
 	glewInit();
 	printlog("GLEW initialized");
 	if (glewIsSupported("GL_VERSION_3_0"))
@@ -572,8 +582,10 @@ int main(void)
 		printerror("OpenGL 3.0 not supported");
 		exit(EXIT_FAILURE);
 	}
+	#endif
 #endif
 
+#ifdef GLEW_
 #ifndef IMMEDIATE_
 	//	GLuint vao;
 	//	glGenVertexArrays(1, &vao);
@@ -593,6 +605,7 @@ int main(void)
 	// Link and set program to use
 	glLinkProgram(p);
 	glUseProgram(p);
+#endif
 #endif
 
 #ifdef WGL_
