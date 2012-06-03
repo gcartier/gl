@@ -103,7 +103,7 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
         GLchar InfoLog[1024];
         glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
         printerror("Error compiling shader");
-        exit( EXIT_FAILURE );
+        exit(EXIT_FAILURE);
     }
 
     glAttachShader(ShaderProgram, ShaderObj);
@@ -264,7 +264,7 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
 	{
 		printerror("Failed to register the window class");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 	
 	if (fullscreen)												// Attempt Fullscreen Mode?
@@ -318,7 +318,7 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Window creation error");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 	
 	static	PIXELFORMATDESCRIPTOR pfd=				// pfd Tells Windows How We Want Things To Be
@@ -347,35 +347,35 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not create an OpenGL device context");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 
 	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not find a suitable pixelformat");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 
 	if(!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not set the pixelformat");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 
 	if (!(hRC=wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not create an OpenGL rendering context");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 
 	if(!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Could not activate the OpenGL rendering context");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 
 	ShowWindow(hWnd,SW_SHOW);						// Show The Window
@@ -387,7 +387,7 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	{
 		KillGLWindow();								// Reset The Display
 		printerror("Initialization failed");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -466,7 +466,7 @@ int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 					LPSTR		lpCmdLine,			// Command Line Parameters
 					int			nCmdShow)			// Window Show State
 #else
-int main( void )
+int main(void)
 #endif
 {
 #ifdef WGLCREATE
@@ -496,12 +496,12 @@ int main( void )
 	int nPixelFormat = ChoosePixelFormat(pDC, &pfd);
  
 	if (nPixelFormat == 0)
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
  
 	BOOL bResult = SetPixelFormat (pDC, nPixelFormat, &pfd);
  
 	if (!bResult)
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
  
 	HGLRC tempContext = wglCreateContext(pDC);
 	wglMakeCurrent(pDC, tempContext);
@@ -510,7 +510,7 @@ int main( void )
 	if (GLEW_OK != err)
 	{
 		printerror("Unable to initialize GLEW");
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 	
 	int attribs[] =
@@ -534,19 +534,19 @@ int main( void )
 	}
 #else
 	// Initialize GLFW
-	if( !glfwInit() )
+	if (!glfwInit())
 	{
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 	
 	// Open an OpenGL window
 	glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 4);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 0);
-	if( !glfwOpenWindow( 600, 400, 0, 0, 0, 0, 0, 0, GLFW_WINDOW  ) ) // GLFW_FULLSCREEN
+	if (!glfwOpenWindow(600, 400, 0, 0, 0, 0, 0, 0, GLFW_WINDOW)) // GLFW_FULLSCREEN
 	{
 		glfwTerminate();
-		exit( EXIT_FAILURE );
+		exit(EXIT_FAILURE);
 	}
 	
 	glfwSetWindowTitle("Hello world!");
@@ -556,7 +556,7 @@ int main( void )
         printlog("Ready for OpenGL 3.0");
     else {
         printerror("OpenGL 3.0 not supported");
-        exit( EXIT_FAILURE );
+        exit(EXIT_FAILURE);
     }
 #endif
 	//	GLuint vao;
@@ -626,11 +626,11 @@ int main( void )
 	return (msg.wParam);							// Exit The Program
 #else
 	// Main loop
-	while( running )
+	while (running)
 	{
 		// OpenGL rendering goes here...
 		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-		glClear( GL_COLOR_BUFFER_BIT );
+		glClear(GL_COLOR_BUFFER_BIT);
 		
 	    glEnableVertexAttribArray(0);
 	    glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -644,13 +644,13 @@ int main( void )
 		glfwSwapBuffers();
 		
 		// Check if ESC key was pressed or window was closed
-		running = !glfwGetKey( GLFW_KEY_ESC ) && glfwGetWindowParam( GLFW_OPENED );
+		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
 	}
 	
 	// Close window and terminate GLFW
 	glfwTerminate();
 	
 	// Exit program
-	exit( EXIT_SUCCESS );
+	exit(EXIT_SUCCESS);
 #endif
 }
