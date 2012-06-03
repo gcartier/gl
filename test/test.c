@@ -1,14 +1,18 @@
+#define GLEW_
+#define OPENGL3_
+#define IMMEDIATE_
+
+
 #include <windows.h>
-#include <GL/glew.h>
-#include <GL/wglew.h>
-#ifndef WGLCREATE
-#include <GL/glfw.h>
+#ifdef GLEW_
+	#include <GL/glew.h>
+	#include <GL/wglew.h>
+#endif
+#ifndef WGL_
+	#include <GL/glfw.h>
 #endif
 #include <stdlib.h>
 #include <stdio.h>
-
-
-// #define IMMEDIATE
 
 
 //-------
@@ -150,7 +154,7 @@ static void CreateVertexBuffer()
 //----------
 
 
-#ifdef WGLCREATE
+#ifdef WGL_
 HDC			hDC=NULL;		// Private GDI Device Context
 HGLRC		hRC=NULL;		// Permanent Rendering Context
 HWND		hWnd=NULL;		// Holds Our Window Handle
@@ -469,7 +473,7 @@ void RenderScene()
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-#ifdef IMMEDIATE
+#ifdef IMMEDIATE_
 	glColor3f(0.0, 0.0, 1.0);
 	glBegin(GL_TRIANGLES);
 	glVertex3f(-0.5, -0.5, 0.0);
@@ -493,7 +497,7 @@ void RenderScene()
 //--------
 
 
-#ifdef WGLCREATE
+#ifdef WGL_
 int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 					HINSTANCE	hPrevInstance,		// Previous Instance
 					LPSTR		lpCmdLine,			// Command Line Parameters
@@ -502,14 +506,14 @@ int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 int main(void)
 #endif
 {
-#ifdef WGLCREATE
+#ifdef WGL_
 	MSG		msg;									// Windows Message Structure
 	BOOL	done=FALSE;								// Bool Variable To Exit Loop
 #else
 	int running = GL_TRUE;
 #endif
 	
-#ifdef WGLCREATE
+#ifdef WGL_
 	CreateGLWindow(L"OpenGL", 640, 480, fullscreen);
 	printlog("Window created");
 	
@@ -521,12 +525,13 @@ int main(void)
 	}
 	printlog("GLEW initialized");
 	
+	#ifdef OPENGL3_
 	if (wglewIsSupported("WGL_ARB_create_context") == 1)
 	{
 		int attribs[] =
 		{
 			WGL_CONTEXT_MAJOR_VERSION_ARB, 3,
-			WGL_CONTEXT_MINOR_VERSION_ARB, 1,
+			WGL_CONTEXT_MINOR_VERSION_ARB, 0,
 			WGL_CONTEXT_FLAGS_ARB, 0,
 			0
 		};
@@ -537,9 +542,10 @@ int main(void)
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hRC);
 		wglMakeCurrent(hDC, newRC);
-		printlog("OpenGL context recreated");
 		hRC = newRC;
+		printlog("OpenGL context recreated");
 	}
+	#endif
 #else
 	// Initialize GLFW
 	if (!glfwInit())
@@ -568,7 +574,7 @@ int main(void)
 	}
 #endif
 
-#ifndef IMMEDIATE
+#ifndef IMMEDIATE_
 	//	GLuint vao;
 	//	glGenVertexArrays(1, &vao);
 	//	glBindVertexArray(vao);
@@ -589,7 +595,7 @@ int main(void)
 	glUseProgram(p);
 #endif
 
-#ifdef WGLCREATE
+#ifdef WGL_
 	while (!done)									// Loop That Runs While done=FALSE
 	{
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))	// Is There A Message Waiting?
