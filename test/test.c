@@ -556,7 +556,7 @@ int main(void)
 		exit(EXIT_FAILURE);
 	}
 	
-	glfwSetWindowTitle("Hello world!");
+	glfwSetWindowTitle("Hello world from GLFW!");
 	
 	glewInit();
 	printlog("GLEW initialized");

@@ -1,1 +1,0 @@
-gcc -DWGLCREATE -DUNICODE -D_WIN32_WINNT=0x0502 -Id:/gl/opengl/glew/include/ -Ld:/gl/opengl/glew/lib lesson1.cpp -mwindows -lopengl32 -lglu32 -lglew32
