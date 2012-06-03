@@ -146,7 +146,7 @@ HINSTANCE	hInstance;		// Holds The Instance Of The Application
 
 BOOL	keys[256];			// Array Used For The Keyboard Routine
 BOOL	active=TRUE;		// Window Active Flag Set To TRUE By Default
-BOOL	fullscreen=TRUE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
+BOOL	fullscreen=FALSE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
@@ -185,7 +185,7 @@ int InitGL(GLvoid)										// All Setup For OpenGL Goes Here
 }
 
 
-int DrawGLScene(GLvoid)									// Here's Where We Do All The Drawing
+int DrawGLScene(GLvoid)									// Here Where We Do All The Drawing
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	// Clear Screen And Depth Buffer
 	glLoadIdentity();									// Reset The Current Modelview Matrix
@@ -235,7 +235,7 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 }
 
 
-BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
+void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 {
 	GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 	WNDCLASS	wc;						// Windows Class Structure
@@ -270,11 +270,11 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	if (fullscreen)												// Attempt Fullscreen Mode?
 	{
 		DEVMODE dmScreenSettings;								// Device Mode
-		memset(&dmScreenSettings,0,sizeof(dmScreenSettings));	// Makes Sure Memory's Cleared
+		memset(&dmScreenSettings,0,sizeof(dmScreenSettings));	// Makes Sure Memory Is Cleared
 		dmScreenSettings.dmSize=sizeof(dmScreenSettings);		// Size Of The Devmode Structure
 		dmScreenSettings.dmPelsWidth	= width;				// Selected Screen Width
 		dmScreenSettings.dmPelsHeight	= height;				// Selected Screen Height
-		dmScreenSettings.dmBitsPerPel	= 24;					// Selected Bits Per Pixel
+		dmScreenSettings.dmBitsPerPel	= 32;					// Selected Bits Per Pixel
 		dmScreenSettings.dmFields=DM_BITSPERPEL|DM_PELSWIDTH|DM_PELSHEIGHT;
 
 		// Try To Set Selected Mode And Get Results.  NOTE: CDS_FULLSCREEN Gets Rid Of Start Bar.
@@ -287,12 +287,14 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 
 	if (fullscreen)												// Are We Still In Fullscreen Mode?
 	{
+		printlog("Fullscreen mode");
 		dwExStyle=WS_EX_APPWINDOW;								// Window Extended Style
 		dwStyle=WS_POPUP;										// Windows Style
 		ShowCursor(FALSE);										// Hide Mouse Pointer
 	}
 	else
 	{
+		printlog("Windowed mode");
 		dwExStyle=WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;			// Window Extended Style
 		dwStyle=WS_OVERLAPPEDWINDOW;							// Windows Style
 	}
@@ -387,8 +389,6 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 		printerror("Initialization failed");
 		exit( EXIT_FAILURE );
 	}
-
-	return TRUE;
 }
 
 
@@ -478,14 +478,11 @@ int main( void )
 	
 #ifdef WGLCREATE
 	CreateGLWindow("OpenGL", 640, 480, fullscreen);
-	if (hWnd)
-		printlog("Window created");
-	else
-		printlog("Window not created");
+	printlog("Window created");
 	
 	HDC		pDC = GetDC(hWnd);
 	HGLRC	m_hrc;
-		
+	
 	PIXELFORMATDESCRIPTOR pfd;
 	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
 	pfd.nSize  = sizeof(PIXELFORMATDESCRIPTOR);
@@ -532,7 +529,7 @@ int main( void )
 		wglMakeCurrent(pDC, m_hrc);
 	}
 	else
-	{	// It's not possible to make a GL 3.x context. Use the old style context (GL 2.1 and before)
+	{	// It is not possible to make a GL 3.x context. Use the old style context (GL 2.1 and before)
 		m_hrc = tempContext;
 	}
 #else
@@ -618,16 +615,15 @@ int main( void )
 				KillGLWindow();						// Kill Our Current Window
 				fullscreen=!fullscreen;				// Toggle Fullscreen / Windowed Mode
 				// Recreate Our OpenGL Window
-				if (!CreateGLWindow("OpenGL", 640, 480, fullscreen))
-				{
-					return 0;						// Quit If Window Was Not Created
-				}
+				CreateGLWindow("OpenGL", 640, 480, fullscreen);
+				printlog("Window recreated");
 			}
 		}
 	}
 
 	// Shutdown
 	KillGLWindow();									// Kill The Window
+	return (msg.wParam);							// Exit The Program
 #else
 	// Main loop
 	while( running )
@@ -653,8 +649,8 @@ int main( void )
 	
 	// Close window and terminate GLFW
 	glfwTerminate();
-#endif
 	
 	// Exit program
 	exit( EXIT_SUCCESS );
+#endif
 }
