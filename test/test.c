@@ -23,8 +23,7 @@
 //-------
 
 
-// - Should PIXELFORMATDESCRIPTOR cColorBits be 24 or 32?
-// - Fix switching between fullscreen and windowed mode
+// - Is it realy necessary to recompile the shaders when switching fullscreen / windowed mode?
 
 
 //-------
@@ -116,9 +115,13 @@ void main()											\n\
 }";
 
 
-static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
+GLuint vertShader;
+GLuint fragShader;
+
+
+static GLuint CreateShader(const char* pShaderText, GLenum ShaderType)
 {
-	printlog("Adding shader");
+	printlog("Creating shader");
 	
 	GLuint ShaderObj = glCreateShader(ShaderType);
 
@@ -137,7 +140,23 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 		printexit("Error compiling shader");
 	}
 
-	glAttachShader(ShaderProgram, ShaderObj);
+	return ShaderObj;
+}
+
+
+static void CreateShaders()
+{
+	vertShader = CreateShader(pVS, GL_VERTEX_SHADER);
+	fragShader = CreateShader(pFS, GL_FRAGMENT_SHADER);
+}
+
+
+static void AddShaders(GLuint ShaderProgram)
+{
+	printlog("Adding shaders");
+	
+	glAttachShader(ShaderProgram, vertShader);
+	glAttachShader(ShaderProgram, fragShader);
 }
 #endif
 
@@ -564,8 +583,7 @@ static void CreateProgram()
 	p = glCreateProgram();
 	printlog("Program created");
 	
-	AddShader(p, pVS, GL_VERTEX_SHADER);
-	AddShader(p, pFS, GL_FRAGMENT_SHADER);
+	AddShaders(p);
 	
 	// Link and set program to use
 	glLinkProgram(p);
@@ -646,6 +664,7 @@ int main(void)
 
 #ifdef GLEW_
 #ifndef IMMEDIATE_
+	CreateShaders();
 	CreateProgram();
 #endif
 #endif
@@ -694,6 +713,7 @@ int main(void)
 				AdjustGLContext();
 				#ifndef IMMEDIATE_
 				ReleaseProgram();
+				CreateShaders();
 				CreateProgram();
 				#endif
 				#endif
