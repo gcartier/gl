@@ -8,6 +8,15 @@
 #include <stdio.h>
 
 
+FILE *logfile;
+
+static void printlog(char* line)
+{
+	fprintf(logfile, line);
+	fflush(logfile);
+}
+
+
 static const char* pVS = "							\n\
 #version 130										\n\
 													\n\
@@ -31,7 +40,7 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
     GLuint ShaderObj = glCreateShader(ShaderType);
 
     if (ShaderObj == 0) {
-        fprintf(stderr, "Error creating shader type %d\n", ShaderType);
+        printlog("Error creating shader type");
         exit(0);
     }
 
@@ -44,7 +53,7 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
     if (!success) {
         GLchar InfoLog[1024];
         glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
-        fprintf(stderr, "Error compiling shader type %d: '%s'\n", ShaderType, InfoLog);
+        printlog("Error compiling shader");
         exit( EXIT_FAILURE );
     }
 
@@ -143,31 +152,31 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 	{
 		if (!wglMakeCurrent(NULL,NULL))					// Are We Able To Release The DC And RC Contexts?
 		{
-			printf("Release Of DC And RC Failed");
+			printlog("Release Of DC And RC Failed");
 		}
 
 		if (!wglDeleteContext(hRC))						// Are We Able To Delete The RC?
 		{
-			printf("Release Rendering Context Failed");
+			printlog("Release Rendering Context Failed");
 		}
 		hRC=NULL;										// Set RC To NULL
 	}
 
 	if (hDC && !ReleaseDC(hWnd,hDC))					// Are We Able To Release The DC
 	{
-		printf("Release Device Context Failed");
+		printlog("Release Device Context Failed");
 		hDC=NULL;										// Set DC To NULL
 	}
 
 	if (hWnd && !DestroyWindow(hWnd))					// Are We Able To Destroy The Window?
 	{
-		printf("Could Not Release hWnd");
+		printlog("Could Not Release hWnd");
 		hWnd=NULL;										// Set hWnd To NULL
 	}
 
 	if (!UnregisterClass((LPCWSTR) "OpenGL", hInstance))			// Are We Able To Unregister Class
 	{
-		printf("Could Not Unregister Class");
+		printlog("Could Not Unregister Class");
 		hInstance=NULL;									// Set hInstance To NULL
 	}
 }
@@ -200,7 +209,7 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 
 	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
 	{
-		printf("Failed To Register The Window Class");
+		printlog("Failed To Register The Window Class");
 		exit( EXIT_FAILURE );
 	}
 	
@@ -217,7 +226,7 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 		// Try To Set Selected Mode And Get Results.  NOTE: CDS_FULLSCREEN Gets Rid Of Start Bar.
 		if (ChangeDisplaySettings(&dmScreenSettings,CDS_FULLSCREEN)!=DISP_CHANGE_SUCCESSFUL)
 		{
-			printf("The Requested Fullscreen Mode Is Not Supported By Your Video Card. Using Windowed Mode Instead");
+			printlog("The Requested Fullscreen Mode Is Not Supported By Your Video Card. Using Windowed Mode Instead");
 			fullscreen=FALSE;		// Windowed Mode Selected.  Fullscreen = FALSE
 		}
 	}
@@ -252,7 +261,7 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 								NULL)))								// Dont Pass Anything To WM_CREATE
 	{
 		KillGLWindow();								// Reset The Display
-		printf("Window Creation Error");
+		printlog("Window Creation Error");
 		exit( EXIT_FAILURE );
 	}
 	
@@ -281,35 +290,35 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	if (!(hDC=GetDC(hWnd)))							// Did We Get A Device Context?
 	{
 		KillGLWindow();								// Reset The Display
-		printf("Can't Create A GL Device Context");
+		printlog("Can't Create A GL Device Context");
 		exit( EXIT_FAILURE );
 	}
 
 	if (!(PixelFormat=ChoosePixelFormat(hDC,&pfd)))	// Did Windows Find A Matching Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
-		printf("Can't Find A Suitable PixelFormat");
+		printlog("Can't Find A Suitable PixelFormat");
 		exit( EXIT_FAILURE );
 	}
 
 	if(!SetPixelFormat(hDC,PixelFormat,&pfd))		// Are We Able To Set The Pixel Format?
 	{
 		KillGLWindow();								// Reset The Display
-		printf("Can't Set The PixelFormat");
+		printlog("Can't Set The PixelFormat");
 		exit( EXIT_FAILURE );
 	}
 
 	if (!(hRC=wglCreateContext(hDC)))				// Are We Able To Get A Rendering Context?
 	{
 		KillGLWindow();								// Reset The Display
-		printf("Can't Create A GL Rendering Context");
+		printlog("Can't Create A GL Rendering Context");
 		exit( EXIT_FAILURE );
 	}
 
 	if(!wglMakeCurrent(hDC,hRC))					// Try To Activate The Rendering Context
 	{
 		KillGLWindow();								// Reset The Display
-		printf("Can't Activate The GL Rendering Context");
+		printlog("Can't Activate The GL Rendering Context");
 		exit( EXIT_FAILURE );
 	}
 
@@ -321,7 +330,7 @@ BOOL CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	if (!InitGL())									// Initialize Our Newly Created GL Window
 	{
 		KillGLWindow();								// Reset The Display
-		printf("Initialization Failed");
+		printlog("Initialization Failed");
 		exit( EXIT_FAILURE );
 	}
 
@@ -408,11 +417,11 @@ int main( void )
 #endif
 	
 #ifdef WGLCREATE
-	CreateGLWindow("OpenGL", 640, 480, 0);
+	CreateGLWindow("OpenGL", 640, 480, fullscreen);
 	if (hWnd)
-		printf("YES");
+		printlog("Window created");
 	else
-		printf("NO");
+		printlog("Window not created");
 	
 	HDC		pDC = GetDC(hWnd);
 	HGLRC	m_hrc;
@@ -443,7 +452,7 @@ int main( void )
 	GLenum err = glewInit();
 	if (GLEW_OK != err)
 	{
-		printf("Unable to initialize GLEW");
+		printlog("Unable to initialize GLEW");
 		exit( EXIT_FAILURE );
 	}
 	
@@ -487,9 +496,9 @@ int main( void )
 	
     glewInit();
     if (glewIsSupported("GL_VERSION_3_0"))
-        printf("Ready for OpenGL 3.0\n");
+        printlog("Ready for OpenGL 3.0\n");
     else {
-        printf("OpenGL 3.0 not supported\n");
+        printlog("OpenGL 3.0 not supported\n");
         exit( EXIT_FAILURE );
     }
 #endif
