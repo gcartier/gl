@@ -118,25 +118,12 @@ static void AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum Shad
 GLuint VBO;
 
 
-#ifdef TUT04
 static void CreateVertexBuffer()
 {
 	const float Vertices[] = {
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
-	};
- 	glGenBuffers(1, &VBO);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
-}
-#else
-static void CreateVertexBuffer()
-{
-	const float Vertices[] = {
-		0.75f, 0.75f, 0.0f, 1.0f,
-		0.75f, -0.75f, 0.0f, 1.0f,
-		-0.75f, -0.75f, 0.0f, 1.0f
+		-1.0f, -1.0f, 0.0f, 1.0f,
+		1.0f, -1.0f, 0.0f, 1.0f,
+		0.0f, 1.0f, 0.0f, 1.0f
 	};
 
 	glGenBuffers(1, &VBO);
@@ -144,7 +131,6 @@ static void CreateVertexBuffer()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(Vertices), Vertices, GL_STATIC_DRAW);
 }
-#endif
 
 
 //----------
@@ -652,14 +638,10 @@ int main( void )
 		
 	    glEnableVertexAttribArray(0);
 	    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	#ifdef TUT04
-	    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
-	#else
 	    glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
-	#endif
-	
+		
 	    glDrawArrays(GL_TRIANGLES, 0, 3);
-	
+		
 	    glDisableVertexAttribArray(0);
 	
 		// Swap front and back rendering buffers
