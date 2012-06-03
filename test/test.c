@@ -227,7 +227,7 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 		hWnd=NULL;										// Set hWnd To NULL
 	}
 
-	if (!UnregisterClass((LPCWSTR) "OpenGL", hInstance))			// Are We Able To Unregister Class
+	if (!UnregisterClass(L"OpenGL", hInstance))			// Are We Able To Unregister Class
 	{
 		printerror("Could not unregister class");
 		hInstance=NULL;									// Set hInstance To NULL
@@ -235,7 +235,7 @@ GLvoid KillGLWindow(GLvoid)								// Properly Kill The Window
 }
 
 
-void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
+void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 {
 	GLuint		PixelFormat;			// Holds The Results After Searching For A Match
 	WNDCLASS	wc;						// Windows Class Structure
@@ -259,7 +259,7 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 	wc.hCursor			= LoadCursor(NULL, IDC_ARROW);			// Load The Arrow Pointer
 	wc.hbrBackground	= NULL;									// No Background Required For GL
 	wc.lpszMenuName		= NULL;									// We Don't Want A Menu
-	wc.lpszClassName	= (LPCWSTR) "OpenGL";					// Set The Class Name
+	wc.lpszClassName	= L"OpenGL";							// Set The Class Name
 
 	if (!RegisterClass(&wc))									// Attempt To Register The Window Class
 	{
@@ -303,8 +303,8 @@ void CreateGLWindow(char* title, int width, int height, BOOL fullscreenflag)
 
 	// Create The Window
 	if (!(hWnd=CreateWindowEx(	dwExStyle,							// Extended Style For The Window
-								(LPCWSTR) "OpenGL",					// Class Name
-								(LPCWSTR) title,					// Window Title
+								L"OpenGL",							// Class Name
+								title,								// Window Title
 								dwStyle |							// Defined Window Style
 								WS_CLIPSIBLINGS |					// Required Window Style
 								WS_CLIPCHILDREN,					// Required Window Style
@@ -477,7 +477,7 @@ int main(void)
 #endif
 	
 #ifdef WGLCREATE
-	CreateGLWindow("OpenGL", 640, 480, fullscreen);
+	CreateGLWindow(L"OpenGL", 640, 480, fullscreen);
 	printlog("Window created");
 	
 	HDC		pDC = GetDC(hWnd);
@@ -615,7 +615,7 @@ int main(void)
 				KillGLWindow();						// Kill Our Current Window
 				fullscreen=!fullscreen;				// Toggle Fullscreen / Windowed Mode
 				// Recreate Our OpenGL Window
-				CreateGLWindow("OpenGL", 640, 480, fullscreen);
+				CreateGLWindow(L"OpenGL", 640, 480, fullscreen);
 				printlog("Window recreated");
 			}
 		}
