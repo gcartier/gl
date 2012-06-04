@@ -23,6 +23,7 @@
 //-------
 
 
+// - I found some demos on the net that set cColorBits = 32
 // - Is it realy necessary to recompile the shaders when switching fullscreen / windowed mode?
 
 
@@ -31,26 +32,34 @@
 //-------
 
 
+BOOL logging = FALSE;
+
 FILE *logfile = NULL;
 
 
 static void print(char* string)
 {
-	if (!logfile)
-		logfile = fopen("log.txt", "w");
-	
-	fprintf(logfile, string);
-	fflush(logfile);
+	if (logging)
+	{
+		if (!logfile)
+			logfile = fopen("log.txt", "w");
+		
+		fprintf(logfile, string);
+		fflush(logfile);
+	}
 }
 
 
 static void vprint(char* format, va_list arguments)
 {
-	if (!logfile)
-		logfile = fopen("log.txt", "w");
-	
-	vfprintf(logfile, format, arguments);
-	fflush(logfile);
+	if (logging)
+	{
+		if (!logfile)
+			logfile = fopen("log.txt", "w");
+		
+		vfprintf(logfile, format, arguments);
+		fflush(logfile);
+	}
 }
 
 
@@ -199,7 +208,7 @@ HINSTANCE	hInstance;		// Holds The Instance Of The Application
 
 BOOL	keys[256];			// Array Used For The Keyboard Routine
 BOOL	active=TRUE;		// Window Active Flag Set To TRUE By Default
-BOOL	fullscreen=TRUE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
+BOOL	fullscreen=FALSE;	// Fullscreen Flag Not Set To Fullscreen Mode By Default
 
 LRESULT	CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	// Declaration For WndProc
 
@@ -226,7 +235,7 @@ GLvoid ResizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 }
 
 
-int SetupGL(GLvoid)										// All Setup For OpenGL Goes Here
+void SetupGL(GLvoid)										// All Setup For OpenGL Goes Here
 {
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);				// Black Background
@@ -234,7 +243,6 @@ int SetupGL(GLvoid)										// All Setup For OpenGL Goes Here
 	glEnable(GL_DEPTH_TEST);							// Enables Depth Testing
 	glDepthFunc(GL_LEQUAL);								// The Type Of Depth Testing To Do
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);	// Really Nice Perspective Calculations
-	return TRUE;										// Initialization Went OK
 }
 
 
@@ -418,8 +426,7 @@ void CreateGLWindow(LPCWSTR title, int width, int height, BOOL fullscreenflag)
 	SetFocus(hWnd);									// Sets Keyboard Focus To The Window
 	ResizeGLScene(width, height);					// Set Up Our Perspective GL Screen
 
-	if (!SetupGL())									// Setup Our Newly Created GL Window
-		printkill("Initialization failed");
+	SetupGL();										// Setup Our Newly Created GL Window
 }
 
 
