@@ -647,7 +647,7 @@ int main(void)
 	
 	// Open an OpenGL window
 	#ifdef OPENGL3_
-	glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 4);
+	glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 8);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 0);
 	#endif

@@ -1,1 +1,0 @@
-gcc -DWGL_ -DUNICODE test.c -mwindows -lopengl32 -lglu32
