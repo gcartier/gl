@@ -32,7 +32,7 @@
 //-------
 
 
-BOOL logging = FALSE;
+BOOL logging = TRUE;
 
 FILE *logfile = NULL;
 
@@ -107,7 +107,7 @@ static void printexit(char* format, ...)
 
 #ifdef GLEW_
 static const char* pVS = "							\n\
-#version 130										\n\
+#version 120										\n\
 													\n\
 void main()											\n\
 {													\n\
@@ -116,7 +116,7 @@ void main()											\n\
 
 
 static const char* pFS = "							\n\
-#version 130										\n\
+#version 120										\n\
 													\n\
 void main()											\n\
 {													\n\
@@ -578,10 +578,6 @@ GLuint idProgram;
 
 static void CreateProgram()
 {
-	//	GLuint vao;
-	//	glGenVertexArrays(1, &vao);
-	//	glBindVertexArray(vao);
-	
 	CreateVertexBuffer();
 	
 	GLuint p;
