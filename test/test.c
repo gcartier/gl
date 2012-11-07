@@ -5,14 +5,15 @@
 
 #include <windows.h>
 #ifdef GLEW_
+	// GLEW *MUST* be included before GLFW
 	#include <GL/glew.h>
 	#include <GL/wglew.h>
 #else
 	#include <GL/gl.h>
 	#include <GL/glu.h>
 #endif
-#ifndef WGL_
-	#include <GL/glfw.h>
+#ifdef GLFW_
+	#include <GL/glfw3.h>
 #endif
 #include <stdlib.h>
 #include <stdio.h>
@@ -109,18 +110,25 @@ static void printexit(char* format, ...)
 static const char* pVS = "							\n\
 #version 120										\n\
 													\n\
+attribute vec3 vertex_coord;						\n\
+													\n\
+varying vec4 final_color;							\n\
+													\n\
 void main()											\n\
 {													\n\
 	gl_Position = gl_Vertex;						\n\
+	final_color = vec4(.525, .322, .004, 1.0);		\n\
 }";
 
 
 static const char* pFS = "							\n\
 #version 120										\n\
 													\n\
+varying vec4 final_color;							\n\
+													\n\
 void main()											\n\
 {													\n\
-	gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);		\n\
+	gl_FragColor = final_color;						\n\
 }";
 
 
@@ -200,7 +208,7 @@ static void CreateVertexBuffer()
 //----------
 
 
-#ifdef WGL_
+#ifndef GLFW_
 HWND		hWnd=NULL;		// Holds Our Window Handle
 HDC			hDC=NULL;		// Private GDI Device Context
 HGLRC		hRC=NULL;		// Permanent Rendering Context
@@ -235,7 +243,7 @@ GLvoid ResizeGLScene(GLsizei width, GLsizei height)		// Resize And Initialize Th
 }
 
 
-void SetupGL(GLvoid)										// All Setup For OpenGL Goes Here
+void SetupGL(GLvoid)									// All Setup For OpenGL Goes Here
 {
 	glShadeModel(GL_SMOOTH);							// Enable Smooth Shading
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);				// Black Background
@@ -498,7 +506,7 @@ LRESULT CALLBACK WndProc(	HWND	hWnd,			// Handle For This Window
 //-----------
 
 
-#ifdef WGL_
+#ifndef GLFW_
 static void AdjustGLContext()
 {
 	#ifdef OPENGL3_
@@ -607,7 +615,15 @@ static void ReleaseProgram()
 //--------
 
 
-#ifdef WGL_
+#ifdef GLFW_
+void keyCallback(GLFWwindow window, int key, int action)
+{
+	printlog("Key: %d, %d", key, action);
+}
+#endif
+
+
+#ifndef GLFW_
 int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 					HINSTANCE	hPrevInstance,		// Previous Instance
 					LPSTR		lpCmdLine,			// Command Line Parameters
@@ -616,14 +632,57 @@ int WINAPI WinMain(	HINSTANCE	hInstance,			// Instance
 int main(void)
 #endif
 {
-#ifdef WGL_
+#ifdef GLFW_
+	int running = GL_TRUE;
+#else
 	MSG		msg;									// Windows Message Structure
 	BOOL	done=FALSE;								// Bool Variable To Exit Loop
-#else
-	int running = GL_TRUE;
 #endif
 	
-#ifdef WGL_
+#ifdef GLFW_
+	// Initialize GLFW
+	if (!glfwInit())
+		printexit("Unable to initialize GLFW");
+	else
+		printlog("GLFW initialized");
+	
+	// Open an OpenGL window
+	#ifdef OPENGL3_
+	glfwWindowHint(GLFW_FSAA_SAMPLES, 8);
+	glfwWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_OPENGL_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
+    // only enable NON-deprecated features
+    // from belkiss: glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // from belkiss: glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    // from belkiss: glfwWindowHint(GLFW_OPENGL_ROBUSTNESS, GLFW_OPENGL_NO_ROBUSTNESS);
+	#endif
+	glfwSetKeyCallback(keyCallback);
+	printlog("glfwCreateWindow");
+	GLFWwindow window;
+	window = glfwCreateWindow(600, 400, GLFW_WINDOWED, "Test", NULL); // GLFW_FULLSCREEN
+	printlog("GLFW window: %d", window);
+	if (!window)
+	{
+		glfwTerminate();
+		exit(EXIT_FAILURE);
+	}
+	glfwMakeContextCurrent(window);
+	
+	glfwSetWindowTitle(window, "Hello world from GLFW!");
+	
+	#ifdef GLEW_
+	GLint err = glewInit();
+	if (err != GLEW_OK)
+		printexit("Unable to initialize GLEW: %d %s %s", err, glewGetErrorString(err), glewGetString(GLEW_VERSION));
+	else
+		printlog("GLEW initialized");
+	if (glewIsSupported("GL_VERSION_3_0"))
+		printlog("Ready for OpenGL 3.0");
+	else
+		printexit("OpenGL 3.0 not supported");
+	#endif
+#else
 	CreateGLWindow(L"OpenGL", 640, 480, fullscreen);
 	printlog("Window created");
 	
@@ -635,34 +694,6 @@ int main(void)
 	
 	AdjustGLContext();
 	#endif
-#else
-	// Initialize GLFW
-	if (!glfwInit())
-		exit(EXIT_FAILURE);
-	printlog("GLFW initialized");
-	
-	// Open an OpenGL window
-	#ifdef OPENGL3_
-	glfwOpenWindowHint(GLFW_FSAA_SAMPLES, 8);
-	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
-	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 0);
-	#endif
-	if (!glfwOpenWindow(600, 400, 0, 0, 0, 0, 0, 0, GLFW_WINDOW)) // GLFW_FULLSCREEN
-	{
-		glfwTerminate();
-		exit(EXIT_FAILURE);
-	}
-	
-	glfwSetWindowTitle("Hello world from GLFW!");
-	
-	#ifdef GLEW_
-	glewInit();
-	printlog("GLEW initialized");
-	if (glewIsSupported("GL_VERSION_3_0"))
-		printlog("Ready for OpenGL 3.0");
-	else
-		printexit("OpenGL 3.0 not supported");
-	#endif
 #endif
 
 #ifdef GLEW_
@@ -672,7 +703,37 @@ int main(void)
 #endif
 #endif
 
-#ifdef WGL_
+	GLuint texture = 0;
+	glGenTextures(1, &texture);
+	glBindTexture(GL_TEXTURE_2D_ARRAY_EXT, texture);
+	printlog("error: %i", glGetError());
+	if (glGetError() != GL_NO_ERROR)
+	{
+		printlog("Unable to bind texture");
+		exit(EXIT_FAILURE);
+	}
+
+#ifdef GLFW_
+	// Main loop
+	while (running)
+	{
+		// Render
+		RenderScene();
+		
+		// Swap front and back rendering buffers
+		glfwSwapBuffers(window);
+		glfwPollEvents();
+		
+		// Check if ESC key was pressed or window was closed
+		running = glfwGetWindowParam(window, GLFW_CLOSE_REQUESTED) == GL_FALSE && glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS;
+	}
+	
+	// Close window and terminate GLFW
+	glfwTerminate();
+	
+	// Exit program
+	exit(EXIT_SUCCESS);
+#else
 	while (!done)									// Loop That Runs While done=FALSE
 	{
 		if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))	// Is There A Message Waiting?
@@ -727,24 +788,5 @@ int main(void)
 	// Shutdown
 	KillGLWindow();									// Kill The Window
 	return (msg.wParam);							// Exit The Program
-#else
-	// Main loop
-	while (running)
-	{
-		// Render
-		RenderScene();
-		
-		// Swap front and back rendering buffers
-		glfwSwapBuffers();
-		
-		// Check if ESC key was pressed or window was closed
-		running = !glfwGetKey(GLFW_KEY_ESC) && glfwGetWindowParam(GLFW_OPENED);
-	}
-	
-	// Close window and terminate GLFW
-	glfwTerminate();
-	
-	// Exit program
-	exit(EXIT_SUCCESS);
 #endif
 }
